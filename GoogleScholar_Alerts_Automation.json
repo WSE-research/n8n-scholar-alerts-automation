@@ -1,0 +1,498 @@
+{
+  "name": "GoogleScholar Alerts Automation",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        320,
+        -300
+      ],
+      "id": "10a48f1a-9659-469f-b4b4-ebbd33bfb07f",
+      "name": "When clicking ‘Test workflow’"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "limit": 100,
+        "simple": false,
+        "filters": {
+          "readStatus": "unread",
+          "sender": "scholaralerts-noreply@google.com"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        600,
+        -300
+      ],
+      "id": "ff3f95d7-6b4c-4ff7-91eb-e818621609af",
+      "name": "Gmail",
+      "webhookId": "7df12147-d259-4ae6-91a4-a764935cf0ad",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "ynox83eYdls8TgAQ",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "text": "=Email Id: {{ $json.id }}\n\nText:\n{{ $json.text }}",
+        "schemaType": "fromJson",
+        "jsonSchemaExample": "{\n\t\"papers\": [\n      {\n        \"email_id\": \"195a7a09bda96b85\",\n        \"paper_title\": \"A Legal Question Answering Ontology-Based System\",\n        \"paper_url\": \"https://link.springer.com/chapter/10.1007/978-3-030-70629-6_19\"\n      },\n      {\n        \"email_id\": \"195a7a09bda9s385\",\n        \"paper_title\": \"Ruddit: Norms of Offensiveness for English Reddit Comments\",\n        \"paper_url\": \"https://aclanthology.org/2021.acl-long.210v2.pdf\"\n      }\n    ]\n}",
+        "options": {
+          "systemPromptTemplate": "You are an expert extraction algorithm.\nOnly extract relevant information from the text.\nIf you do not know the value of an attribute asked to extract, you may omit the attribute's value."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "typeVersion": 1,
+      "position": [
+        780,
+        -120
+      ],
+      "id": "880fde59-4c5c-47f9-bf64-51029d5e74fd",
+      "name": "Information Extractor"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        540,
+        60
+      ],
+      "id": "7de187d7-fc81-451c-b5e5-e40871b2a603",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "NjUHcPoIGxqXbE5c",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "output.papers",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1460,
+        -40
+      ],
+      "id": "f7944fbe-27eb-42e3-987e-aa8bf0094ac4",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "inputText": "=Paper title: {{ $json.paper_title }} \nPaper URL: {{ $json.paper_url }}",
+        "categories": {
+          "categories": [
+            {
+              "category": "Relevant",
+              "description": "Paper title matches all the following criteria below:\n\n    \\item[System aspect]--- Question Answering systems;\n    \\item[Data aspect]--- \\RDF-based Knowledge Graphs;\n    \\item[Language aspect]--- Multilinguality and cross-linguality.\n    \\item[Peer-reviewed and published]--- The paper was published on a conference or a journal (it's not a preprint on Arxiv or Openreview or similar)."
+            },
+            {
+              "category": "NotRelevant",
+              "description": "Paper title matches all the following criteria below:\n\n    \\item[System aspect]--- Question Answering systems;\n    \\item[Data aspect]--- \\RDF-based Knowledge Graphs;\n    \\item[Language aspect]--- Multilinguality and cross-linguality.\n    \\item[Peer-reviewed and published]--- The paper was published on a conference or a journal (it's not a preprint on Arxiv or Openreview or similar)."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textClassifier",
+      "typeVersion": 1,
+      "position": [
+        1800,
+        -60
+      ],
+      "id": "2dbd003b-7b2c-4726-a593-07baf5a201ab",
+      "name": "Text Classifier"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1840,
+        160
+      ],
+      "id": "ce123072-2992-44d5-8be9-0b125de33d86",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "NjUHcPoIGxqXbE5c",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "batchSize": "=1",
+        "options": {
+          "reset": false
+        }
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1136,
+        -45
+      ],
+      "id": "b731f232-b228-4519-823c-259baa706892",
+      "name": "Loop Over Emails",
+      "alwaysOutputData": false,
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "operation": "markAsRead",
+        "messageId": "={{ $json.id }}"
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1576,
+        -295
+      ],
+      "id": "0b6487d4-94d1-4e5b-9470-b277dad2a9f8",
+      "name": "Gmail1",
+      "webhookId": "1dc5acac-30f4-43d4-926c-e0297ca5e095",
+      "alwaysOutputData": false,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "ynox83eYdls8TgAQ",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch"
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        1356,
+        -295
+      ],
+      "id": "1939729a-1090-46b9-beb2-e059b94b397c",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1tB1Roz7QULFpB5HAA2Df9Gmmrn0bqN0CwBghQWpkIgM",
+          "mode": "list",
+          "cachedResultName": "n8nScholarAlerts",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1tB1Roz7QULFpB5HAA2Df9Gmmrn0bqN0CwBghQWpkIgM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1tB1Roz7QULFpB5HAA2Df9Gmmrn0bqN0CwBghQWpkIgM/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "paper_title": "={{ $json.paper_title }}",
+            "paper_url": "={{ $json.paper_url }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "paper_title",
+              "displayName": "paper_title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "paper_url",
+              "displayName": "paper_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2180,
+        -80
+      ],
+      "id": "ad1872f3-8e0c-4aca-ad0e-2ec8dfca4bcd",
+      "name": "Add to relevant",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "vQDxtZlcNADpW0UP",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1tB1Roz7QULFpB5HAA2Df9Gmmrn0bqN0CwBghQWpkIgM",
+          "mode": "list",
+          "cachedResultName": "n8nScholarAlerts",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1tB1Roz7QULFpB5HAA2Df9Gmmrn0bqN0CwBghQWpkIgM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 330878464,
+          "mode": "list",
+          "cachedResultName": "nonrelevant",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1tB1Roz7QULFpB5HAA2Df9Gmmrn0bqN0CwBghQWpkIgM/edit#gid=330878464"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "paper_title": "={{ $json.paper_title }}",
+            "paper_url": "={{ $json.paper_url }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "paper_title",
+              "displayName": "paper_title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "paper_url",
+              "displayName": "paper_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2172,
+        130
+      ],
+      "id": "333e33ca-33a5-4c9c-833c-e8b0d5aa50a3",
+      "name": "Add to nonrelevant",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "vQDxtZlcNADpW0UP",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail": {
+      "main": [
+        [
+          {
+            "node": "Information Extractor",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Information Extractor",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Information Extractor": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text Classifier": {
+      "main": [
+        [
+          {
+            "node": "Add to relevant",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Add to nonrelevant",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Emails": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ],
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail1": {
+      "main": [
+        []
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Gmail1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add to relevant": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add to nonrelevant": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "5e61fff3-1bcd-4164-b7ca-3e309bd53105",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "639b963b24c825874cdbaa43b05010b6df075bb526093a0f692191057bf5e558"
+  },
+  "id": "zVgMozQOu59IduVk",
+  "tags": [
+    {
+      "createdAt": "2025-03-18T15:31:36.181Z",
+      "updatedAt": "2025-03-18T15:31:36.181Z",
+      "id": "xXe4YhxirFitPXyx",
+      "name": "research"
+    }
+  ]
+}
