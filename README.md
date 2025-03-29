@@ -30,8 +30,10 @@ To use and improve this automation workflow for your own research, follow the in
 
 1. Clone this repository to your local machine.
 2. Grab the `GoogleScholar_Alerts_Automation.json` file, create a new n8n workflow, and click on the "Import from File" option.
-3. Set up the GMail and Google Sheets auth (you may also use different data sources).
-4. Run the automation workflow either manually or schedule it according to your preference.
+3. Set up the GMail and Google Sheets auth (you may also use different data sources) in the [Google Cloud Console](https://console.cloud.google.com/).
+   * Note: If you haven't used the GMail and Google Sheets APIs before, you need to *enable* them in the Google Console.
+4. Set up your OpenAI API key in the corresponding component.
+5. Run the automation workflow either manually or schedule it according to your preference.
 
 ---
 
